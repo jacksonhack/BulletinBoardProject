@@ -1,3 +1,10 @@
+/**
+ * Programming Assignment 2- Bullietin Board Client
+ * Jackson Hacker
+ * and
+ * Armen Krikorian
+ */
+
 package bulletinboard;
 
 public class BulletinBoardClient {

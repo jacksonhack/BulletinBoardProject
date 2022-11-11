@@ -1,4 +1,4 @@
-# Jackson Hacker and Armin Kirkorian
+# Jackson Hacker and Armin Krikorian
 # Networks Project 2: Bulletin Board
 
 ## Compiling and Running

@@ -2,7 +2,7 @@
  * Programming Assignment 2- Bullietin Board Server
  * Jackson Hacker
  * and
- * Armen Kirkorian
+ * Armen Krikorian
  */
 
 package bulletinboard;
