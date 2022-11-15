@@ -7,74 +7,110 @@
 
 package bulletinboard;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.*;
-import java.util.*;
 
 public class BulletinBoardServer {
     public static void main(String[] args) throws Exception{
-        // Set the port number.
-        int port = 6789;
+        ServerSocket serverSocket = null;
+        try {
+            // Set the port number.
+            int port = 6789;
 
-        // Establish the listen socket.
-        ServerSocket socket = new ServerSocket(port);
+            // Establish the listen socket.
+            serverSocket = new ServerSocket(port);
+            serverSocket.setReuseAddress(true);
 
-        List <Connection> connections = new ArrayList<Connection>();
+            Board board = new Board(serverSocket);
 
-        Board board = new Board(socket);
+            System.out.println("Starting Bulletin Board server on localhost port " + port + "...");
 
-        // Process requests in an infinite loop, starting a thread for each client connection.
-        while(true) {
-            // Listen for a TCP connection request.
-            Socket connectionSocket = socket.accept();
+            // Process requests in an infinite loop, starting a thread for each client connection.
+            while(true) {
+                // Listen for a TCP connection request.
+                Socket client = serverSocket.accept();
 
-            Connection connection = new Connection(connectionSocket, board);
+                ClientHandler connection = new ClientHandler(client, board);
 
-            // Add connection to the list of connections.
-            board.addConnection(connection);
+                // Add connection to the list of connections.
+                board.addConnection(connection);
 
-            // Create a new thread to process the request.
-            Thread thread = new Thread(connection);
+                // Create a new thread to process the request.
+                Thread thread = new Thread(connection);
 
-            thread.start();
-        }
+                thread.start();
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        } finally {
+            System.out.println("Server shutting down.");
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+            }
+        }  
     }
 }
 
-final class Connection implements Runnable {
+final class ClientHandler implements Runnable {
     Socket connection;
     Board board;
 
     // Constructor
-    Connection(Socket connection, Board board) {
+    ClientHandler(Socket connection, Board board) {
         this.connection = connection;
         this.board = board;
     }
 
     // Implement the run() method of the Runnable interface.
     public void run() {
-        System.out.println("Connection established.");
-        // process requests in an infinite loop as they come in
-        while(connection.isConnected()) {
-            // process commands as they come, break on exit command
-            System.out.println("Processing commands...");
+        PrintWriter out = null;
+        BufferedReader in = null;
 
-            // break after 5 seconds
-            try {
-                Thread.sleep(5000);
-                break;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        System.out.println("Connection established.");
 
         try {
-            // close the socket and remove the connection from the list of connections on the board
-            System.out.println("Connection closing.");
-            connection.close();
-            board.removeConnection(this);
-        } catch (Exception e) {
-            System.out.println("Error closing connection.");
+            // Create input and output streams for the socket.
+            out = new PrintWriter(connection.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+            // Get messages from the client and display them.
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                // if (inputLine.equals("exit")) {
+                //     break;
+                // } else if (inputLine.equals("list")) {
+                //     out.println(board.list());
+                // } else if (inputLine.startsWith("post")) {
+                //     board.post(inputLine.substring(5));
+                // } else if (inputLine.startsWith("delete")) {
+                //     board.delete(Integer.parseInt(inputLine.substring(7)));
+                // } else {
+                //     out.println("Invalid command.");
+                // }
+
+                out.println("test");
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+                if (in != null) {
+                    in.close();
+                    connection.close();
+                }
+            } catch (IOException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
         }
         
     }
