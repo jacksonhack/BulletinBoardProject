@@ -31,6 +31,11 @@ public class BulletinBoardClient {
             while ((userInput = stdIn.readLine()) != null) {
                 out.println(userInput);
                 System.out.println("Server response: " + in.readLine());
+                if (userInput.equals("%exit")) {
+                    socket.close();
+                    System.out.println("Disconnected from server.");
+                    break;
+                }
                 System.out.println("Enter a command: ");
             }
         } catch (Exception e) {
