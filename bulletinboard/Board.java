@@ -5,11 +5,6 @@ import java.util.*;
 
 public class Board {
     List <ClientHandler> connections = new ArrayList<ClientHandler>();
-    ServerSocket socket;
-
-    Board(ServerSocket socket) {
-        this.socket = socket;
-    }
 
     public void addConnection(ClientHandler connection) {
         connections.add(connection);
