@@ -108,6 +108,7 @@ final class ClientHandler implements Runnable {
                     in.close();
                     connection.close();
                 }
+                board.removeConnection(this);
             } catch (IOException e) {
                 System.out.println("Error: " + e.getMessage());
             }
