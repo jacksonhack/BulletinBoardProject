@@ -88,43 +88,8 @@ final class ClientHandler implements Runnable {
             // force user to join a board or disconnect at first
             awaitJoinBoardOrExit(out, in);
 
-            // Get messages from the client and display them.
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                // commands are lead by %, so we check for that and a keyword
-                if (inputLine.startsWith("%post")) {
-                    // read the post subject and body, and add them to the board, and send a confirmation with the message id
-
-                }
-                else if (inputLine.startsWith("%users")) {
-                    // send a list of all users on the board
-
-                }
-                else if (inputLine.startsWith("%message")) {
-                    // read the message id and send the message subject and body
-                
-                }
-                else if (inputLine.startsWith("%leave")) {
-                    // remove the user from the board and send a confirmation
-                    board.removeConnection(this);
-                    board = null;
-                    out.println("You have left the board. Use %join to join another board.");
-
-                    // await the user joining another board
-                    awaitJoinBoardOrExit(out, in);
-                }
-                else if (inputLine.startsWith("%exit")) {
-                    // disconnect the client and send a confirmation
-                    out.println("Disconnecting you from the server...");
-                    disconnect();
-                }
-                // if the message is not a command, send back an error message
-                else {
-                    out.println("Error: Invalid command.");
-                }
-
-                // out.println("test");
-            }
+            // Read commands from the client and process them.
+            awaitBoardCommands(out, in);
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
         } finally {
@@ -150,7 +115,7 @@ final class ClientHandler implements Runnable {
     }
 
     // await the client joining a board
-    public void awaitJoinBoardOrExit(PrintWriter out, BufferedReader in) throws IOException {
+    private void awaitJoinBoardOrExit(PrintWriter out, BufferedReader in) throws IOException {
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
             // await join command to join a board
@@ -176,6 +141,45 @@ final class ClientHandler implements Runnable {
             else {
                 // prompt user to join a board, and list board names
                 out.println("Please join a board. Available boards:" + ServerConstants.boards.keySet());
+            }
+        }
+    }
+
+    // await the client sending board commands
+    private void awaitBoardCommands(PrintWriter out, BufferedReader in) throws IOException {
+        // Get messages from the client and display them.
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            // commands are lead by %, so we check for that and a keyword
+            if (inputLine.startsWith("%post")) {
+                // read the post subject and body, and add them to the board, and send a confirmation with the message id
+
+            }
+            else if (inputLine.startsWith("%users")) {
+                // send a list of all users on the board
+
+            }
+            else if (inputLine.startsWith("%message")) {
+                // read the message id and send the message subject and body
+            
+            }
+            else if (inputLine.startsWith("%leave")) {
+                // remove the user from the board and send a confirmation
+                board.removeConnection(this);
+                board = null;
+                out.println("You have left the board. Use %join to join another board.");
+
+                // await the user joining another board
+                awaitJoinBoardOrExit(out, in);
+            }
+            else if (inputLine.startsWith("%exit")) {
+                // disconnect the client and send a confirmation
+                out.println("Disconnecting you from the server...");
+                disconnect();
+            }
+            // if the message is not a command, send back an error message
+            else {
+                out.println("Error: Invalid command.");
             }
         }
     }
