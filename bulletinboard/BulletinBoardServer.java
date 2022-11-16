@@ -90,6 +90,10 @@ final class ClientHandler implements Runnable {
 
             // Read commands from the client and process them.
             awaitBoardCommands(out, in);
+        } catch(EarlyDisconnectException e) {
+            System.out.println("Client disconnected.");
+            Thread.currentThread().interrupt();
+            return;
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
         } finally {
@@ -97,7 +101,13 @@ final class ClientHandler implements Runnable {
         }
     }
 
-    public void disconnect() {
+    
+    private void earlyDisconnect() throws EarlyDisconnectException {
+        disconnect();
+        throw new EarlyDisconnectException("Client disconnected.");
+    }
+
+    private void disconnect(){
         try {
             if (out != null) {
                 out.close();
@@ -106,16 +116,16 @@ final class ClientHandler implements Runnable {
                 in.close();
                 connection.close();
             }
-            board.removeConnection(this);
-            // interrupt current thread to stop it
-            Thread.currentThread().interrupt();
+            if (board != null) {
+                board.removeConnection(this);
+            }
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
     // await the client joining a board
-    private void awaitJoinBoardOrExit(PrintWriter out, BufferedReader in) throws IOException {
+    private void awaitJoinBoardOrExit(PrintWriter out, BufferedReader in) throws IOException, EarlyDisconnectException {
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
             // await join command to join a board
@@ -127,6 +137,7 @@ final class ClientHandler implements Runnable {
                     board = ServerConstants.boards.get(boardName);
                     board.addConnection(this);
                     out.println("Joined board " + boardName);
+                    // TODO: pass back list of available commands
                     return;
                 } else {
                     out.println("Board " + boardName + " does not exist.");
@@ -135,8 +146,7 @@ final class ClientHandler implements Runnable {
             // await exit command to disconnect
             else if(inputLine.startsWith("%exit")) {
                 out.println("Disconnecting you from the server...");
-                disconnect();
-                return;
+                earlyDisconnect();
             }
             else {
                 // prompt user to join a board, and list board names
@@ -146,7 +156,7 @@ final class ClientHandler implements Runnable {
     }
 
     // await the client sending board commands
-    private void awaitBoardCommands(PrintWriter out, BufferedReader in) throws IOException {
+    private void awaitBoardCommands(PrintWriter out, BufferedReader in) throws IOException, EarlyDisconnectException {
         // Get messages from the client and display them.
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
@@ -175,12 +185,19 @@ final class ClientHandler implements Runnable {
             else if (inputLine.startsWith("%exit")) {
                 // disconnect the client and send a confirmation
                 out.println("Disconnecting you from the server...");
-                disconnect();
+                earlyDisconnect();
             }
             // if the message is not a command, send back an error message
             else {
                 out.println("Error: Invalid command.");
             }
         }
+    }
+}
+
+// Early disconnect exception
+class EarlyDisconnectException extends Exception {
+    public EarlyDisconnectException(String message) {
+        super(message);
     }
 }
