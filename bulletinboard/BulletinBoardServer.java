@@ -67,6 +67,7 @@ public class BulletinBoardServer {
 final class ClientHandler implements Runnable {
     Socket connection;
     Board board;
+    String userName;
 
     PrintWriter out = null;
     BufferedReader in = null;
@@ -126,14 +127,26 @@ final class ClientHandler implements Runnable {
     private void awaitJoinBoardOrExit(PrintWriter out, BufferedReader in) throws IOException, EarlyDisconnectException {
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
+            // ident command will come here, handle it
+            if (inputLine.startsWith("%ident")) {
+                String[] command = inputLine.split(" ");
+                if (command.length != 2) {
+                    out.println("Error: invalid command");
+                    continue;
+                }
+                userName = command[1];
+                // welcome user to server, send list of available join commands all in one line
+                out.println("Welcome to the Bulletin Board Server, " + userName + "!\t" + "Available boards: " + ServerConstants.boards.keySet() + "\tCurrently available commands:\t%join [joins default public board]\t%groupjoin <board name> [joins specified board]\t%groups [lists available boards]\t%exit [disconnects from server]");
+            }
             // await join or groupjoin command to join a board
-            if(inputLine.equals("%join")) {
+            else if(inputLine.equals("%join")) {
                 // join the public board by default
                 String boardName = ServerConstants.PUBLIC_BOARD_NAME;
                 board = ServerConstants.boards.get(boardName);
                 board.addConnection(this);
                 out.println("Joined board " + boardName);
                 // TODO: send list of available commands
+                return;
             }
             else if(inputLine.startsWith("%groupjoin")) {
                 // join board and send welcome message

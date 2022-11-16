@@ -14,10 +14,19 @@ import java.net.*;
 
 public class BulletinBoardClient {
 
+    static String screenName;
+
     public static void main(String[] args) throws Exception {
 
         // Welcome the user to the bulletin board client
         System.out.println("Welcome to the Bulletin Board Client!");
+
+        // Prompt user for a screen name to be used on bulletin boards
+        System.out.println("Please enter a screen name (this will be seen by all other users on a bulletin board): ");
+
+        // Get the screen name from the user
+        BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
+        screenName = inFromUser.readLine();
 
         while(true) {
             // ask user for %connect command and parse it
@@ -46,8 +55,6 @@ public class BulletinBoardClient {
         try (Socket socket = new Socket(host, port)) {
             System.out.println("Connected to server.");
 
-            System.out.println("Please join a server to continue.\nUse the %join command to join the public board by default or the %groupjoin <groupName> command to join a private board.\nUse %groups to see a list of available boards.");
-
             // Create input and output streams for the socket.
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -55,16 +62,29 @@ public class BulletinBoardClient {
             // Create a BufferedReader to read commands from the console.
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 
+            // use hidden %ident command to identify user to server
+            out.println("%ident " + screenName);
+            // print welcome message and join instructions from server
+            System.out.println(replaceTabs(in.readLine()));
+
             // Read commands from the console and send them to the server.
             String userInput;
-            System.out.print("Enter a command: ");
-            while ((userInput = stdIn.readLine()) != null) {
-                out.println(userInput);
-                System.out.println("Server response: " + in.readLine());
-                if (userInput.equals("%exit")) {
-                    socket.close();
-                    System.out.println("Disconnected from server.");
-                    break;
+            System.out.print("\nEnter a command: ");
+            // while the user has not entered a %disconnect command, continue to read commands or await a server response
+            while (true) {
+                // read user input and get response from server, if user inputs something
+                if((userInput = stdIn.readLine()) != null) {
+                    out.println(userInput);
+                    System.out.println("Server response: " + replaceTabs(in.readLine()));
+                    if (userInput.equals("%exit")) {
+                        socket.close();
+                        System.out.println("Disconnected from server.");
+                        break;
+                    }
+                }
+                // otherwise, if the server has sent a message (notificaiton of messages), print it
+                else if(in.ready()) {
+                    System.out.println("From Server: " + replaceTabs(in.readLine()));
                 }
                 System.out.println("Enter a command: ");
             }
@@ -72,5 +92,10 @@ public class BulletinBoardClient {
             System.out.println("Error connecting to server: " + e.getMessage());
             System.out.println("Please try another %connect command.");
         }
+    }
+
+    // replace tabs with newlines
+    private static String replaceTabs(String s) {
+        return s.replace("\t", "\n");
     }
 }
