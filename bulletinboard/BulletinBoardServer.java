@@ -17,9 +17,10 @@ import java.util.Map;
 
 final class ServerConstants {
     public static final int PORT = 6789;
+    public static final String PUBLIC_BOARD_NAME = "PublicBoard";
     // hash map of boards and their names
     public static final Map<String, Board> boards = Map.of(
-            "board1", new Board()
+            PUBLIC_BOARD_NAME, new PublicBoard()
     );
 }
 
@@ -125,8 +126,16 @@ final class ClientHandler implements Runnable {
     private void awaitJoinBoardOrExit(PrintWriter out, BufferedReader in) throws IOException, EarlyDisconnectException {
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
-            // await join command to join a board
-            if(inputLine.startsWith("%join")) {
+            // await join or groupjoin command to join a board
+            if(inputLine.equals("%join")) {
+                // join the public board by default
+                String boardName = ServerConstants.PUBLIC_BOARD_NAME;
+                board = ServerConstants.boards.get(boardName);
+                board.addConnection(this);
+                out.println("Joined board " + boardName);
+                // TODO: send list of available commands
+            }
+            else if(inputLine.startsWith("%groupjoin")) {
                 // join board and send welcome message
                 // board name follows %join in inputLine
                 String boardName = inputLine.substring(6);
@@ -140,6 +149,10 @@ final class ClientHandler implements Runnable {
                     out.println("Board " + boardName + " does not exist.");
                 }
             }
+            // allow %groups command to list available boards
+            else if(inputLine.equals("%groups")) {
+                out.println("Available boards: " + ServerConstants.boards.keySet());
+            }
             // await exit command to disconnect
             else if(inputLine.startsWith("%exit")) {
                 out.println("Disconnecting you from the server...");
@@ -147,13 +160,15 @@ final class ClientHandler implements Runnable {
             }
             else {
                 // prompt user to join a board, and list board names
-                out.println("Please join a board. Available boards:" + ServerConstants.boards.keySet());
+                out.println("Please join a public board using %join or a private board using %groupjoin <boardName>. Available boards:" + ServerConstants.boards.keySet());
             }
         }
     }
 
     // await the client sending board commands
     private void awaitBoardCommands(PrintWriter out, BufferedReader in) throws IOException, EarlyDisconnectException {
+        // TODO: split this into sections based on private or public board (or both), add help command
+        
         // Get messages from the client and display them.
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
@@ -178,6 +193,10 @@ final class ClientHandler implements Runnable {
 
                 // await the user joining another board
                 awaitJoinBoardOrExit(out, in);
+            }
+            // allow %groups command to list available boards
+            else if(inputLine.equals("%groups")) {
+                out.println("Available boards: " + ServerConstants.boards.keySet());
             }
             else if (inputLine.startsWith("%exit")) {
                 // disconnect the client and send a confirmation

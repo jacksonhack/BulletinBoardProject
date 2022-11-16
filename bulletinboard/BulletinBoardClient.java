@@ -47,6 +47,7 @@ public class BulletinBoardClient {
             System.out.println("Connected to server.");
 
             // TODO: tell user to use %join command to join a board or %groups for list of boards
+            System.out.println("Please join a server to continue.\nUse the %join command to join the public board by default or the %groupjoin <groupName> command to join a private board.\nUse %groups to see a list of available boards.");
 
             // Create input and output streams for the socket.
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
