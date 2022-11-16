@@ -117,6 +117,7 @@ final class ClientHandler implements Runnable {
             }
             if (board != null) {
                 board.removeConnection(this);
+                board.removeUser(userName);
             }
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
@@ -144,6 +145,7 @@ final class ClientHandler implements Runnable {
                 String boardName = ServerConstants.PUBLIC_BOARD_NAME;
                 board = ServerConstants.boards.get(boardName);
                 board.addConnection(this);
+                board.addUser(userName);
                 out.println("Joined board " + boardName);
                 // TODO: send list of available commands
                 return;
@@ -155,6 +157,7 @@ final class ClientHandler implements Runnable {
                 if(ServerConstants.boards.containsKey(boardName)) {
                     board = ServerConstants.boards.get(boardName);
                     board.addConnection(this);
+                    board.addUser(userName);
                     out.println("Joined board " + boardName);
                     // TODO: pass back list of available commands
                     return;
@@ -201,6 +204,7 @@ final class ClientHandler implements Runnable {
             else if (inputLine.startsWith("%leave")) {
                 // remove the user from the board and send a confirmation
                 board.removeConnection(this);
+                board.removeUser(userName);
                 board = null;
                 out.println("You have left the board. Use %join to join another board.");
 
