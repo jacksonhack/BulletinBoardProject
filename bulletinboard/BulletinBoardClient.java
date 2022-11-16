@@ -64,29 +64,34 @@ public class BulletinBoardClient {
 
             // use hidden %ident command to identify user to server
             out.println("%ident " + screenName);
-            // print welcome message and join instructions from server
-            System.out.println(replaceTabs(in.readLine()));
 
             // Read commands from the console and send them to the server.
             String userInput;
-            System.out.print("\nEnter a command: ");
-            // while the user has not entered a %disconnect command, continue to read commands or await a server response
+            // while the user has not entered a %exit command, continue to read commands or await a server response
             while (true) {
+                // otherwise, if the server has sent a message (notificaiton of messages), print it
+                if(in.ready()) {
+                    while(in.ready()) {
+                        System.out.println(replaceTabs(in.readLine()));
+                    }
+                    System.out.println("Enter a command and press enter (it may not look like your cursor is moving, but the input is coming through): ");
+                }
                 // read user input and get response from server, if user inputs something
-                if((userInput = stdIn.readLine()) != null) {
+                else if(stdIn.ready()) {
+                    userInput = stdIn.readLine();
                     out.println(userInput);
-                    System.out.println("Server response: " + replaceTabs(in.readLine()));
+                    // // print lines from server until there are no more lines to read
+                    // while(in.ready()) {
+                    //     System.out.println(replaceTabs(in.readLine()));
+                    // }
                     if (userInput.equals("%exit")) {
                         socket.close();
                         System.out.println("Disconnected from server.");
                         break;
                     }
+                    // ask user for a command
+                    //System.out.println("Enter a command and press enter (it may not look like your cursor is moving, but the input is coming through): ");
                 }
-                // otherwise, if the server has sent a message (notificaiton of messages), print it
-                else if(in.ready()) {
-                    System.out.println("From Server: " + replaceTabs(in.readLine()));
-                }
-                System.out.println("Enter a command: ");
             }
         } catch (Exception e) {
             System.out.println("Error connecting to server: " + e.getMessage());

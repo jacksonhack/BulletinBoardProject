@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
-import java.util.HashMap;
 import java.util.Map;
 
 final class ServerConstants {
@@ -20,7 +19,7 @@ final class ServerConstants {
     public static final String PUBLIC_BOARD_NAME = "PublicBoard";
     // hash map of boards and their names
     public static final Map<String, Board> boards = Map.of(
-            PUBLIC_BOARD_NAME, new PublicBoard()
+            PUBLIC_BOARD_NAME, new PublicBoard(PUBLIC_BOARD_NAME)
     );
 }
 
@@ -146,8 +145,7 @@ final class ClientHandler implements Runnable {
                 board = ServerConstants.boards.get(boardName);
                 board.addConnection(this);
                 board.addUser(userName);
-                out.println("Joined board " + boardName);
-                // TODO: send list of available commands
+                out.println("Joined board " + boardName + "\tUsers currently on board: " + board.getUsers()  + "\tMost recent messsages: " + board.getRecentMessages() + "\t\t" + board.getAllCommands());
                 return;
             }
             else if(inputLine.startsWith("%groupjoin")) {
@@ -158,8 +156,7 @@ final class ClientHandler implements Runnable {
                     board = ServerConstants.boards.get(boardName);
                     board.addConnection(this);
                     board.addUser(userName);
-                    out.println("Joined board " + boardName);
-                    // TODO: pass back list of available commands
+                    out.println("Joined board " + boardName + "Users currently on board: " + board.getUsers() + "\t\t" + board.getAllCommands());
                     return;
                 } else {
                     out.println("Board " + boardName + " does not exist.");
@@ -183,25 +180,83 @@ final class ClientHandler implements Runnable {
 
     // await the client sending board commands
     private void awaitBoardCommands(PrintWriter out, BufferedReader in) throws IOException, EarlyDisconnectException {
-        // TODO: split this into sections based on private or public board (or both), add help command
-        
         // Get messages from the client and display them.
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
-            // commands are lead by %, so we check for that and a keyword
-            if (inputLine.startsWith("%post")) {
-                // read the post subject and body, and add them to the board, and send a confirmation with the message id
 
-            }
-            else if (inputLine.startsWith("%users")) {
-                // send a list of all users on the board
+            // public board only commands
+            if(board.getClass() == PublicBoard.class) {
+                if (inputLine.startsWith("%post")) {
+                    // formatted like %post -s <subject> -b <body>
+                    // everything after -s, but before -b is the subject
+                    // everything after -b is the body
+                    String[] command = inputLine.split(" ");
+                    if (command.length < 5) {
+                        out.println("Error: invalid command");
+                        continue;
+                    }
+                    // make sure -s is in the right place
+                    if(!command[1].equals("-s")) {
+                        out.println("Error: invalid command");
+                        continue;
+                    }
+                    // get subject
+                    String subject = "";
+                    int i = 2;
+                    while(!command[i].equals("-b")) {
+                        subject += command[i] + " ";
+                        i++;
+                    }
+                    // get body
+                    String body = "";
+                    i++;
+                    while(i < command.length) {
+                        body += command[i] + " ";
+                        i++;
+                    }
 
+                    // build message object
+                    Message message = new Message(userName, subject, body);
+
+                    // add message to board
+                    board.addMessage(message);
+
+                    // send confirmation to poster
+                    out.println("Message posted to board");
+                    continue;
+                }
+                else if (inputLine.startsWith("%users")) {
+                    // send a list of all users on the board
+                    out.println("Users on current board (" + ServerConstants.PUBLIC_BOARD_NAME + "): " + board.getUsers().toString());
+                    continue;
+                }
+                // formatted like %message <id>
+                else if (inputLine.startsWith("%message")) {
+                    // send the message with the given id
+                    String[] command = inputLine.split(" ");
+                    if (command.length != 2) {
+                        out.println("Error: invalid command");
+                        continue;
+                    }
+                    int id = Integer.parseInt(command[1]);
+                    Message message = board.getMessage(id);
+                    if(message == null) {
+                        out.println("Error: message with id " + id + " does not exist.");
+                    } else {
+                        // send the message body as Message <id> from <sender>: <body>
+                        out.println("Message " + id + " from " + message.sender + ": " + message.body);
+                    }
+                    continue;
+                }
             }
-            else if (inputLine.startsWith("%message")) {
-                // read the message id and send the message subject and body
-            
+
+            // private board only commands
+            else if(board.getClass() == PrivateBoard.class) {
+                // TODO: add private board commands [DON'T FORGET CONTINUE STATEMENTS]
             }
-            else if (inputLine.startsWith("%leave")) {
+
+            // both public and private board commands
+            if (inputLine.startsWith("%leave")) {
                 // remove the user from the board and send a confirmation
                 board.removeConnection(this);
                 board.removeUser(userName);
@@ -220,11 +275,18 @@ final class ClientHandler implements Runnable {
                 out.println("Disconnecting you from the server...");
                 earlyDisconnect();
             }
-            // if the message is not a command, send back an error message
+            else if(inputLine.startsWith("%help")) {
+                out.println(board.getAllCommands());
+            }
             else {
                 out.println("Error: Invalid command.");
             }
         }
+    }
+
+    // allow the board to send a message to the client for notificiations
+    public void sendMessage(String message) {
+        out.println(message);
     }
 }
 
