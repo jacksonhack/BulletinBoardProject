@@ -46,8 +46,6 @@ public class BulletinBoardClient {
         try (Socket socket = new Socket(host, port)) {
             System.out.println("Connected to server.");
 
-            // TODO: print list of available commands (usage)
-
             // TODO: tell user to use %join command to join a board or %groups for list of boards
 
             // Create input and output streams for the socket.
