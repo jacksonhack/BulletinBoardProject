@@ -91,9 +91,7 @@ final class ClientHandler implements Runnable {
             // Read commands from the client and process them.
             awaitBoardCommands(out, in);
         } catch(EarlyDisconnectException e) {
-            System.out.println("Client disconnected.");
-            Thread.currentThread().interrupt();
-            return;
+            System.out.println("Client requested disconnect.");
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
         } finally {
@@ -103,7 +101,6 @@ final class ClientHandler implements Runnable {
 
     
     private void earlyDisconnect() throws EarlyDisconnectException {
-        disconnect();
         throw new EarlyDisconnectException("Client disconnected.");
     }
 
