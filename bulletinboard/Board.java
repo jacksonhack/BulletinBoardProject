@@ -3,9 +3,6 @@ package bulletinboard;
 import java.util.*;
 
 public interface Board {
-    List <ClientHandler> connections = new ArrayList<ClientHandler>();
-    List <String> users = new ArrayList<String>();
-    Map <Integer, Message> messages = new HashMap<Integer, Message>();
 
     public String getBoardName();
 

@@ -1,9 +1,15 @@
 package bulletinboard;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PublicBoard implements Board { 
 
+    List <ClientHandler> connections = new ArrayList<ClientHandler>();
+    List <String> users = new ArrayList<String>();
+    Map <Integer, Message> messages = new HashMap<Integer, Message>();
     String boardName;
     Integer nextId;
 

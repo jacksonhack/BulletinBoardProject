@@ -141,7 +141,7 @@ final class ClientHandler implements Runnable {
                 }
                 userName = command[1];
                 // welcome user to server, send list of available join commands all in one line
-                out.println("Welcome to the Bulletin Board Server, " + userName + "!\t" + "Available boards: " + ServerConstants.boards.keySet() + "\tCurrently available commands:\t%join [joins default public board]\t%groupjoin <board name> [joins specified board]\t%groups [lists available boards]\t%exit [disconnects from server]");
+                out.println("Welcome to the Bulletin Board Server, " + userName + "!\t" + "Available boards: " + ServerConstants.boards.keySet() + "\tCurrently available commands:\t%join [joins default public board]\t%groupjoin <boardName> [joins specified board]\t%groups [lists available boards]\t%exit [disconnects from server]");
             }
             // await join or groupjoin command to join a board
             else if(inputLine.equals("%join")) {
@@ -155,8 +155,13 @@ final class ClientHandler implements Runnable {
             }
             else if(inputLine.startsWith("%groupjoin")) {
                 // join board and send welcome message
-                // board name follows %join in inputLine
-                String boardName = inputLine.substring(11);
+                // board name follows %groupjoin in inputLine
+                String[] command = inputLine.split(" ");
+                if (command.length != 2) {
+                    out.println("Error: invalid command");
+                    continue;
+                }
+                String boardName = command[1];
                 if(ServerConstants.boards.containsKey(boardName)) {
                     board = ServerConstants.boards.get(boardName);
                     board.addConnection(this);
@@ -257,16 +262,98 @@ final class ClientHandler implements Runnable {
 
             // private board only commands
             else if(board.getClass() == PrivateBoard.class) {
-                // TODO: add private board commands [DON'T FORGET CONTINUE STATEMENTS]
+                // %grouppost -s <subject> -b <body>
+                if (inputLine.startsWith("%grouppost")) {
+                    // formatted like %post -s <subject> -b <body>
+                    // everything after -s, but before -b is the subject
+                    // everything after -b is the body
+                    String[] command = inputLine.split(" ");
+                    if (command.length < 5) {
+                        out.println("Error: invalid command");
+                        continue;
+                    }
+                    // make sure -s is in the right place
+                    if(!command[1].equals("-s")) {
+                        out.println("Error: invalid command");
+                        continue;
+                    }
+                    // get subject
+                    String subject = "";
+                    int i = 2;
+                    while(!command[i].equals("-b")) {
+                        subject += command[i] + " ";
+                        i++;
+                    }
+                    // get body
+                    String body = "";
+                    i++;
+                    while(i < command.length) {
+                        body += command[i] + " ";
+                        i++;
+                    }
+
+                    // build message object
+                    Message message = new Message(userName, subject, body);
+
+                    // add message to board
+                    board.addMessage(message);
+
+                    // send confirmation to poster
+                    out.println("Message posted to board");
+                    continue;
+                }
+                else if (inputLine.startsWith("%groupusers")) {
+                    // send a list of all users on the board
+                    out.println("Users on current board (" + board.getBoardName() + "): " + board.getUsers().toString());
+                    continue;
+                }
+                // formatted like %groupmessage <groupName> <id>
+                // only allow user to view messages from their board or the public board
+                else if (inputLine.startsWith("%groupmessage")) {
+                    // send the message with the given id
+                    String[] command = inputLine.split(" ");
+                    if (command.length != 3) {
+                        out.println("Error: invalid command");
+                        continue;
+                    }
+                    String groupName = command[1];
+                    int id = Integer.parseInt(command[2]);
+                    if(groupName.equals(ServerConstants.PUBLIC_BOARD_NAME)) {
+                        Message message = ServerConstants.boards.get(ServerConstants.PUBLIC_BOARD_NAME).getMessage(id);
+                        if(message == null) {
+                            out.println("Error: message with id " + id + " does not exist.");
+                        } else {
+                            // send the message body as Message <id> from <sender>: <body>
+                            out.println("Message " + id + " from " + message.sender + ": " + message.body);
+                        }
+                    } else if(groupName.equals(board.getBoardName())) {
+                        Message message = board.getMessage(id);
+                        if(message == null) {
+                            out.println("Error: message with id " + id + " does not exist.");
+                        } else {
+                            // send the message body as Message <id> from <sender>: <body>
+                            out.println("Message " + id + " from " + message.sender + ": " + message.body);
+                        }
+                    } 
+                    // if the user is not on the board but the board exists, send an error
+                    else if(ServerConstants.boards.containsKey(groupName)) {
+                        out.println("Error: you are not a member of board " + groupName + ". Please leave the current board and join the board you wish to view.");
+                    }
+                    else {
+                        // if the board does not exist, send an error
+                        out.println("Error: board " + groupName + " does not exist.");
+                    }
+                    continue;
+                }
             }
 
             // both public and private board commands
-            if (inputLine.startsWith("%leave")) {
+            if (inputLine.startsWith("%leave") || inputLine.startsWith("%groupleave")) {
                 // remove the user from the board and send a confirmation
                 board.removeConnection(this);
                 board.removeUser(userName);
                 board = null;
-                out.println("You have left the board. Use %join to join another board.");
+                out.println("You have left the board. Use %join or %groupjoin to join another board.");
 
                 // await the user joining another board
                 awaitJoinBoardOrExit(out, in);
