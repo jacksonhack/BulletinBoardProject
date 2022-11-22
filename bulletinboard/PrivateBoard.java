@@ -79,7 +79,7 @@ public class PrivateBoard implements Board {
             %grouppost -s <subject> -b <body> [posts a messgae with the subject and body to the current board]
             %groupusers [lists all users on the current board ONLY]
             %groupleave OR %leave [leaves the current board]
-            %groupmessage <groupName> <messageId> [displays the message with the given id from the given board. NOTE: must be a member of that private board to read a message, unless reading from public board]
+            %groupmessage <groupName> <messageId> [displays the body of the message with the given id from the given board. NOTE: must be a member of that private board to read a message, unless reading from public board]
             %groups [lists all groups on the server]
             %exit [disconnects from the server]
             %help [lists all available commands and their usages]\t

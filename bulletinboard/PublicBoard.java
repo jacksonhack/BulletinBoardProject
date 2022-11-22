@@ -89,7 +89,7 @@ public class PublicBoard implements Board {
             %post -s <subject> -b <body> [posts a messgae with the subject and body to the current board]
             %users [lists all users on the current board]
             %leave [leaves the current board]
-            %message <id> [displays the message with the given id]
+            %message <id> [displays the body of the message with the given id]
             %groups [lists all groups]
             %exit [disconnects from the server]
             %help [lists all available commands and their usages]\t
