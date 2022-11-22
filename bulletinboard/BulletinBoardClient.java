@@ -30,7 +30,7 @@ public class BulletinBoardClient {
 
         while(true) {
             // ask user for %connect command and parse it
-            System.out.println("Please enter a %connect command to connect to a server. Format this command as follows: %connect <host> <port>");
+            System.out.println("Please enter a %connect command to connect to a server (will run on localhost port 6789 by default). Format this command as follows: %connect <host> <port>");
             BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
             String userCommand = userInput.readLine();
 

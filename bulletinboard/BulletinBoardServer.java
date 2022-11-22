@@ -19,7 +19,12 @@ final class ServerConstants {
     public static final String PUBLIC_BOARD_NAME = "PublicBoard";
     // hash map of boards and their names
     public static final Map<String, Board> boards = Map.of(
-            PUBLIC_BOARD_NAME, new PublicBoard(PUBLIC_BOARD_NAME)
+            PUBLIC_BOARD_NAME, new PublicBoard(PUBLIC_BOARD_NAME),
+            // four private boards
+            "PrivateBoard1", new PrivateBoard("PrivateBoard1"),
+            "PrivateBoard2", new PrivateBoard("PrivateBoard2"),
+            "PrivateBoard3", new PrivateBoard("PrivateBoard3"),
+            "PrivateBoard4", new PrivateBoard("PrivateBoard4")
     );
 }
 
@@ -151,12 +156,12 @@ final class ClientHandler implements Runnable {
             else if(inputLine.startsWith("%groupjoin")) {
                 // join board and send welcome message
                 // board name follows %join in inputLine
-                String boardName = inputLine.substring(6);
+                String boardName = inputLine.substring(11);
                 if(ServerConstants.boards.containsKey(boardName)) {
                     board = ServerConstants.boards.get(boardName);
                     board.addConnection(this);
                     board.addUser(userName);
-                    out.println("Joined board " + boardName + "Users currently on board: " + board.getUsers() + "\t\t" + board.getAllCommands());
+                    out.println("Joined board " + boardName + "\tUsers currently on board: " + board.getUsers() + "\tMost recent messsages: " + board.getRecentMessages() + "\t\t" + board.getAllCommands());
                     return;
                 } else {
                     out.println("Board " + boardName + " does not exist.");
